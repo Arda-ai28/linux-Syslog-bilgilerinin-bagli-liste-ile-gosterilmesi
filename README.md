@@ -1,0 +1,1 @@
+# linux-Syslog-bilgilerinin-bagli-liste-ile-gosterilmesi
