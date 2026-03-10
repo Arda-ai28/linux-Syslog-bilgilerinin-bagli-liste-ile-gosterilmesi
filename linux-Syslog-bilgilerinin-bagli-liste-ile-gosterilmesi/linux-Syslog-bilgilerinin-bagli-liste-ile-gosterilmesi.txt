@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/**
+ * @struct LogNode
+ * @brief Her bir sistem günlüğünü temsil eden bağlı liste düğümü.
+ */
+typedef struct LogNode {
+    char logData[512];       // Log satırları uzun olabilir, buffer geniş olmalı.
+    struct LogNode* next;
+} LogNode;
+
+/**
+ * @brief Listenin sonuna yeni düğüm ekler.
+ */
+void addLog(LogNode** head, const char* message) {
+    LogNode* newNode = (LogNode*)malloc(sizeof(LogNode));
+    if (!newNode) return;
+    
+    strncpy(newNode->logData, message, 511);
+    newNode->next = NULL;
+
+    if (*head == NULL) {
+        *head = newNode;
+    } else {
+        LogNode* temp = *head;
+        while (temp->next != NULL) temp = temp->next;
+        temp->next = newNode;
+    }
+}
+
+/**
+ * @brief Gerçek sistem dosyasını okuyan fonksiyon.
+ */
+void readActualSyslog(LogNode** head, int limit) {
+    // Kali'de syslog dosyası /var/log/syslog altındadır.
+    FILE* file = fopen("/var/log/syslog", "r");
+    if (file == NULL) {
+        perror("Dosya okunurken hata olustu (Sudo denediniz mi?)");
+        return;
+    }
+
+    char line[512];
+    int count = 0;
+    // Dosyadaki son 'limit' kadar satırı listeye ekleyelim
+    while (fgets(line, sizeof(line), file) && count < limit) {
+        line[strcspn(line, "\n")] = 0; // Satır sonu karakterini temizle
+        addLog(head, line);
+        count++;
+    }
+    fclose(file);
+}
+
+void displayLogs(LogNode* head) {
+    printf("\n--- Kali Linux Gercek Syslog Kayitlari (Bagli Liste) ---\n");
+    LogNode* current = head;
+    while (current != NULL) {
+        printf("-> %s\n", current->logData);
+        current = current->next;
+    }
+}
+
+int main() {s
+    LogNode* syslogList = NULL;
+
+    // Gerçek syslog'dan ilk 20 satırı oku
+    readActualSyslog(&syslogList, 20);
+
+    displayLogs(syslogList);
+    
+    // Belleği temizleme (FreeList fonksiyonu eklenebilir)
+    return 0;
+}
